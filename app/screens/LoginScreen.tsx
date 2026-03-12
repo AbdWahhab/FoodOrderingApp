@@ -54,7 +54,7 @@ export default function LoginScreen() {
 
         {/* Bottom white section */}
         <View style={styles.formSection}>
-          <Text style={styles.welcomeText}>Welcome Back! 👋</Text>
+          <Text style={styles.welcomeText}>Welcome Back!</Text>
           <Text style={styles.subText}>Sign in to continue</Text>
 
           {/* Email Input */}
