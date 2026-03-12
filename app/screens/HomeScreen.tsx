@@ -1,4 +1,4 @@
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, TextInput } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, TextInput, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useState } from 'react';
@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { categories } from '../data/foodData';
 
 type RootStackParamList = {
+  Login: undefined;
   Tabs: undefined;
   FoodList: { categoryId: string; categoryName: string };
 };
@@ -31,9 +32,25 @@ export default function HomeScreen() {
             <Text style={styles.greeting}>Good day! 👋</Text>
             <Text style={styles.headerTitle}>What are you craving?</Text>
           </View>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarEmoji}>🍔</Text>
-          </View>
+          <TouchableOpacity
+              style={styles.logoutCircle}
+              onPress={() => {
+                Alert.alert(
+                  'Logout',
+                  'Are you sure you want to logout?',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Logout',
+                      style: 'destructive',
+                      onPress: () => navigation.replace('Login'),
+                    },
+                  ]
+                );
+              }}
+            >
+              <Ionicons name="log-out-outline" size={22} color="#fff" />
+            </TouchableOpacity>
         </View>
 
         {/* Search Bar */}
@@ -229,5 +246,14 @@ const styles = StyleSheet.create({
   noResultsText: {
     fontSize: 16,
     color: '#999',
+  },
+
+  logoutCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
