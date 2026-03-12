@@ -1,10 +1,11 @@
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, TextInput, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { categories } from '../data/foodData';
+import CustomAlert from '../components/CustomAlert';
 
 type RootStackParamList = {
   Login: undefined;
@@ -14,13 +15,49 @@ type RootStackParamList = {
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
+const user = {
+  name: 'Johnny Depp',
+};
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good Morning';
+  if (hour < 17) return 'Good Afternoon';
+  return 'Good Evening';
+}
+
 export default function HomeScreen() {
   const navigation = useNavigation<NavigationProp>();
   const [search, setSearch] = useState('');
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    buttons: [] as { text: string; onPress?: () => void; style?: 'default' | 'cancel' | 'destructive' }[],
+  });
+
+  const showAlert = (title: string, message: string, buttons: typeof alertConfig.buttons) => {
+    setAlertConfig({ visible: true, title, message, buttons });
+  };
 
   const filteredCategories = categories.filter(cat =>
     cat.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleLogout = () => {
+    showAlert(
+      'Logout 👋',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: () => navigation.replace('Login'),
+        },
+      ]
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -28,29 +65,16 @@ export default function HomeScreen() {
       {/* Header */}
       <LinearGradient colors={['#e67e22', '#f39c12']} style={styles.header}>
         <View style={styles.headerTop}>
-          <View>
-            <Text style={styles.greeting}>Good day! 👋</Text>
+        <View>
+            <Text style={styles.greeting}>{getGreeting()}, {user.name.split(' ')[0]}!</Text>
             <Text style={styles.headerTitle}>What are you craving?</Text>
-          </View>
+        </View>
           <TouchableOpacity
-              style={styles.logoutCircle}
-              onPress={() => {
-                Alert.alert(
-                  'Logout',
-                  'Are you sure you want to logout?',
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    {
-                      text: 'Logout',
-                      style: 'destructive',
-                      onPress: () => navigation.replace('Login'),
-                    },
-                  ]
-                );
-              }}
-            >
-              <Ionicons name="log-out-outline" size={22} color="#fff" />
-            </TouchableOpacity>
+            style={styles.logoutCircle}
+            onPress={handleLogout}
+          >
+            <Ionicons name="log-out-outline" size={22} color="#fff" />
+          </TouchableOpacity>
         </View>
 
         {/* Search Bar */}
@@ -118,6 +142,14 @@ export default function HomeScreen() {
           />
         )}
       </View>
+
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        buttons={alertConfig.buttons}
+        onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+      />
     </View>
   );
 }
@@ -149,17 +181,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: '#fff',
-  },
-  avatarCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarEmoji: {
-    fontSize: 24,
   },
   searchBar: {
     flexDirection: 'row',
@@ -247,7 +268,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#999',
   },
-
   logoutCircle: {
     width: 48,
     height: 48,

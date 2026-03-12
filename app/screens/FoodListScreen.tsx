@@ -1,16 +1,18 @@
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { useState } from 'react';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { foodItems } from '../data/foodData';
 import { useCart } from '../context/CartContext';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import CustomAlert from '../components/CustomAlert';
 
 type RootStackParamList = {
-    Login: undefined;
-    Tabs: { screen: string } | undefined;
-    FoodList: { categoryId: string; categoryName: string };
-  };
+  Login: undefined;
+  Tabs: { screen: string } | undefined;
+  FoodList: { categoryId: string; categoryName: string };
+};
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -20,11 +22,21 @@ export default function FoodListScreen() {
   const { categoryId, categoryName } = route.params;
   const { addToCart, cartItems } = useCart();
 
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    buttons: [] as { text: string; onPress?: () => void; style?: 'default' | 'cancel' | 'destructive' }[],
+  });
+
+  const showAlert = (title: string, message: string, buttons: typeof alertConfig.buttons) => {
+    setAlertConfig({ visible: true, title, message, buttons });
+  };
+
   const filteredItems = foodItems.filter(
     (item) => item.categoryId === categoryId
   );
 
-  // Total items in cart
   const totalCartItems = cartItems.reduce(
     (sum, item) => sum + item.quantity, 0
   );
@@ -36,7 +48,9 @@ export default function FoodListScreen() {
       price: item.price,
       image: item.image,
     });
-    Alert.alert('Added! 🛒', `${item.name} added to cart`);
+    showAlert('Added! 🛒', `${item.name} added to cart`, [
+      { text: 'OK' }
+    ]);
   };
 
   const getCartQuantity = (itemId: string) => {
@@ -50,8 +64,6 @@ export default function FoodListScreen() {
       {/* Header */}
       <LinearGradient colors={['#e67e22', '#f39c12']} style={styles.header}>
         <View style={styles.headerTop}>
-
-          {/* Back Button */}
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
@@ -59,7 +71,6 @@ export default function FoodListScreen() {
             <Ionicons name="arrow-back" size={22} color="#fff" />
           </TouchableOpacity>
 
-          {/* Title */}
           <View style={styles.headerCenter}>
             <Text style={styles.headerTitle}>{categoryName}</Text>
             <Text style={styles.headerSubtitle}>
@@ -67,7 +78,6 @@ export default function FoodListScreen() {
             </Text>
           </View>
 
-          {/* Cart Icon with Badge */}
           <TouchableOpacity
             style={styles.cartButton}
             onPress={() => navigation.navigate('Tabs', { screen: 'Cart' })}
@@ -79,7 +89,6 @@ export default function FoodListScreen() {
               </View>
             )}
           </TouchableOpacity>
-
         </View>
       </LinearGradient>
 
@@ -95,7 +104,6 @@ export default function FoodListScreen() {
             <View style={styles.card}>
               <Image source={{ uri: item.image }} style={styles.image} />
               <View style={styles.info}>
-
                 <View>
                   <Text style={styles.name}>{item.name}</Text>
                   <Text style={styles.portion}>{item.portion}</Text>
@@ -125,11 +133,18 @@ export default function FoodListScreen() {
                     <Text style={styles.addButtonText}>Add to Cart</Text>
                   </LinearGradient>
                 </TouchableOpacity>
-
               </View>
             </View>
           );
         }}
+      />
+
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        buttons={alertConfig.buttons}
+        onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
       />
     </View>
   );

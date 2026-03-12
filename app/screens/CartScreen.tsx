@@ -1,15 +1,18 @@
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import CustomAlert from '../components/CustomAlert';
 
 type RootStackParamList = {
-  Login: undefined;
-  Tabs: undefined;
-  FoodList: { categoryId: string; categoryName: string };
-};
+    Login: undefined;
+    Tabs: undefined;
+    Home: undefined;
+    FoodList: { categoryId: string; categoryName: string };
+  };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -17,8 +20,19 @@ export default function CartScreen() {
   const { cartItems, increaseQuantity, decreaseQuantity, totalAmount } = useCart();
   const navigation = useNavigation<NavigationProp>();
 
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    buttons: [] as { text: string; onPress?: () => void; style?: 'default' | 'cancel' | 'destructive' }[],
+  });
+
+  const showAlert = (title: string, message: string, buttons: typeof alertConfig.buttons) => {
+    setAlertConfig({ visible: true, title, message, buttons });
+  };
+
   const handlePlaceOrder = () => {
-    Alert.alert(
+    showAlert(
       'Confirm Order 🛒',
       `Your total is LKR ${(totalAmount + 150).toFixed(2)}. Place order?`,
       [
@@ -26,7 +40,7 @@ export default function CartScreen() {
         {
           text: 'Place Order',
           onPress: () =>
-            Alert.alert(
+            showAlert(
               'Order Placed! 🎉',
               'Your order has been placed successfully! It will arrive in 30-45 minutes.',
               [{ text: 'OK' }]
@@ -36,7 +50,6 @@ export default function CartScreen() {
     );
   };
 
-  // Empty cart state
   if (cartItems.length === 0) {
     return (
       <View style={styles.emptyContainer}>
@@ -46,12 +59,8 @@ export default function CartScreen() {
         <View style={styles.emptyBody}>
           <Text style={styles.emptyIcon}>🛒</Text>
           <Text style={styles.emptyText}>Your cart is empty</Text>
-          <Text style={styles.emptySubText}>
-            Go add some delicious food!
-          </Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Tabs')}
-          >
+          <Text style={styles.emptySubText}>Go add some delicious food!</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Home')}>
             <LinearGradient
               colors={['#e67e22', '#f39c12']}
               style={styles.browseButton}
@@ -88,13 +97,10 @@ export default function CartScreen() {
           <View style={styles.card}>
             <Image source={{ uri: item.image }} style={styles.image} />
             <View style={styles.info}>
-
               <Text style={styles.name}>{item.name}</Text>
               <Text style={styles.subtotal}>
                 LKR {(item.price * item.quantity).toFixed(2)}
               </Text>
-
-              {/* Quantity Controls */}
               <View style={styles.quantityRow}>
                 <TouchableOpacity
                   style={styles.qtyButton}
@@ -102,21 +108,17 @@ export default function CartScreen() {
                 >
                   <Ionicons name="remove" size={16} color="#fff" />
                 </TouchableOpacity>
-
                 <Text style={styles.quantity}>{item.quantity}</Text>
-
                 <TouchableOpacity
                   style={styles.qtyButton}
                   onPress={() => increaseQuantity(item.id)}
                 >
                   <Ionicons name="add" size={16} color="#fff" />
                 </TouchableOpacity>
-
                 <Text style={styles.unitPrice}>
                   LKR {item.price.toFixed(2)} each
                 </Text>
               </View>
-
             </View>
           </View>
         )}
@@ -124,8 +126,6 @@ export default function CartScreen() {
 
       {/* Footer */}
       <View style={styles.footer}>
-
-        {/* Order Summary */}
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Subtotal</Text>
@@ -144,7 +144,6 @@ export default function CartScreen() {
           </View>
         </View>
 
-        {/* Place Order Button */}
         <TouchableOpacity onPress={handlePlaceOrder}>
           <LinearGradient
             colors={['#e67e22', '#f39c12']}
@@ -156,8 +155,15 @@ export default function CartScreen() {
             <Ionicons name="checkmark-circle" size={22} color="#fff" />
           </LinearGradient>
         </TouchableOpacity>
-
       </View>
+
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        buttons={alertConfig.buttons}
+        onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+      />
     </View>
   );
 }
