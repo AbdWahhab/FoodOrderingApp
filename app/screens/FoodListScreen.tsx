@@ -1,17 +1,32 @@
 import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, Alert } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { foodItems } from '../data/foodData';
 import { useCart } from '../context/CartContext';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+type RootStackParamList = {
+    Login: undefined;
+    Tabs: { screen: string } | undefined;
+    FoodList: { categoryId: string; categoryName: string };
+  };
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function FoodListScreen() {
   const route = useRoute<any>();
+  const navigation = useNavigation<NavigationProp>();
   const { categoryId, categoryName } = route.params;
   const { addToCart, cartItems } = useCart();
 
   const filteredItems = foodItems.filter(
     (item) => item.categoryId === categoryId
+  );
+
+  // Total items in cart
+  const totalCartItems = cartItems.reduce(
+    (sum, item) => sum + item.quantity, 0
   );
 
   const handleAddToCart = (item: typeof foodItems[0]) => {
@@ -34,10 +49,38 @@ export default function FoodListScreen() {
 
       {/* Header */}
       <LinearGradient colors={['#e67e22', '#f39c12']} style={styles.header}>
-        <Text style={styles.headerTitle}>{categoryName}</Text>
-        <Text style={styles.headerSubtitle}>
-          {filteredItems.length} items available
-        </Text>
+        <View style={styles.headerTop}>
+
+          {/* Back Button */}
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={22} color="#fff" />
+          </TouchableOpacity>
+
+          {/* Title */}
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>{categoryName}</Text>
+            <Text style={styles.headerSubtitle}>
+              {filteredItems.length} items available
+            </Text>
+          </View>
+
+          {/* Cart Icon with Badge */}
+          <TouchableOpacity
+            style={styles.cartButton}
+            onPress={() => navigation.navigate('Tabs', { screen: 'Cart' })}
+          >
+            <Ionicons name="cart" size={24} color="#fff" />
+            {totalCartItems > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{totalCartItems}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
+        </View>
       </LinearGradient>
 
       {/* Food Items */}
@@ -104,15 +147,56 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
   },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   headerSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: 'rgba(255,255,255,0.85)',
+  },
+  cartButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badge: {
+    position: 'absolute',
+    right: -4,
+    top: -4,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    width: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: '#e67e22',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   listContent: {
     padding: 16,
@@ -142,6 +226,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
+    marginBottom: 4,
+  },
+  portion: {
+    fontSize: 12,
+    color: '#999',
     marginBottom: 6,
   },
   priceRow: {
@@ -180,11 +269,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     fontSize: 14,
-  },
-
-  portion: {
-    fontSize: 12,
-    color: '#999',
-    marginBottom: 6,
   },
 });
